@@ -148,14 +148,36 @@
     margin-left: auto;
     align-self: center;
   }
-  .grid {
+  .sections {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 2rem 4rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 14px;
   }
+  .cat-section { margin-bottom: 3rem; }
+  .cat-section:last-child { margin-bottom: 0; }
+  .cat-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .cat-heading h2 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .cat-heading-count {
+    font-size: 12px;
+    color: var(--faint);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .empty-section { display: none; }
   .card {
     background: var(--surface);
     border: 0.5px solid var(--border);
@@ -314,7 +336,7 @@
   <span class="count" id="count"></span>
 </div>
 
-<div class="grid" id="grid"></div>
+<div class="sections" id="sections"></div>
 
 <div class="modal-bg" id="modal-bg">
   <div class="modal" id="modal">
@@ -800,43 +822,69 @@ const catColors = {
   flower: "tag-flower", native: "tag-native", tree: "tag-tree", shrub: "tag-shrub"
 };
 const catLabels = {
-  fruit: "Fruit", veg: "Vegetable", herb: "Herb", flower: "Flower",
-  native: "Native", tree: "Tree", shrub: "Shrub"
+  fruit: "Fruit trees", veg: "Vegetables", herb: "Herbs",
+  flower: "Flowers", native: "Natives", tree: "Trees", shrub: "Shrubs"
 };
+const catOrder = ["fruit","veg","herb","flower","native","shrub","tree"];
 
 let activeFilter = "all";
 let activeDiff = "all";
 let query = "";
 
-function renderGrid() {
-  const grid = document.getElementById("grid");
-  const countEl = document.getElementById("count");
-  const filtered = plants.filter(p => {
-    const matchCat = activeFilter === "all" || p.cats.includes(activeFilter);
-    const matchDiff = activeDiff === "all" || p.difficulty === parseInt(activeDiff);
-    const q = query.toLowerCase();
-    const matchQ = !q || p.name.toLowerCase().includes(q) || p.latin.toLowerCase().includes(q);
-    return matchCat && matchDiff && matchQ;
-  });
-  countEl.textContent = filtered.length + " plant" + (filtered.length !== 1 ? "s" : "");
-  if (!filtered.length) {
-    grid.innerHTML = '<div class="empty">No plants found — try a different search or filter.</div>';
-    return;
-  }
-  grid.innerHTML = filtered.map((p, i) => `
-    <div class="card" data-idx="${plants.indexOf(p)}" tabindex="0" role="button" aria-label="View ${p.name} details">
-      <div class="card-emoji">${p.emoji}</div>
-      <div class="card-body">
-        <div class="card-name">${p.name}</div>
-        <div class="card-latin">${p.latin}</div>
-        <div class="card-tags">${p.cats.map(c => `<span class="tag ${catColors[c]}">${catLabels[c]}</span>`).join("")}</div>
-      </div>
+function cardHTML(p) {
+  return `<div class="card" data-idx="${plants.indexOf(p)}" tabindex="0" role="button" aria-label="View ${p.name} details">
+    <div class="card-emoji">${p.emoji}</div>
+    <div class="card-body">
+      <div class="card-name">${p.name}</div>
+      <div class="card-latin">${p.latin}</div>
+      <div class="card-tags">${p.cats.map(c => `<span class="tag ${catColors[c]}">${catLabels[c]}</span>`).join("")}</div>
     </div>
-  `).join("");
-  grid.querySelectorAll(".card").forEach(card => {
+  </div>`;
+}
+
+function bindCards(container) {
+  container.querySelectorAll(".card").forEach(card => {
     card.addEventListener("click", () => openModal(parseInt(card.dataset.idx)));
     card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") openModal(parseInt(card.dataset.idx)); });
   });
+}
+
+function renderGrid() {
+  const wrap = document.getElementById("sections");
+  const countEl = document.getElementById("count");
+  const q = query.toLowerCase();
+
+  const catsToShow = activeFilter === "all" ? catOrder : [activeFilter];
+  let totalVisible = 0;
+  let html = "";
+
+  catsToShow.forEach(cat => {
+    const matching = plants.filter(p => {
+      const matchCat = p.cats.includes(cat);
+      const matchDiff = activeDiff === "all" || p.difficulty === parseInt(activeDiff);
+      const matchQ = !q || p.name.toLowerCase().includes(q) || p.latin.toLowerCase().includes(q);
+      return matchCat && matchDiff && matchQ;
+    });
+    if (!matching.length) return;
+    totalVisible += matching.length;
+    html += `<div class="cat-section" id="section-${cat}">
+      <div class="cat-heading">
+        <h2>${catLabels[cat]}</h2>
+        <span class="cat-heading-count">${matching.length}</span>
+      </div>
+      <div class="grid">${matching.map(cardHTML).join("")}</div>
+    </div>`;
+  });
+
+  countEl.textContent = totalVisible + " plant" + (totalVisible !== 1 ? "s" : "");
+
+  if (!totalVisible) {
+    wrap.innerHTML = '<div class="empty" style="padding:4rem 0;text-align:center;color:var(--faint);font-size:15px;">No plants found — try a different search or filter.</div>';
+    return;
+  }
+
+  wrap.innerHTML = html;
+  bindCards(wrap);
 }
 
 function openModal(idx) {
@@ -907,8 +955,17 @@ document.getElementById("filters").addEventListener("click", e => {
   if (!btn) return;
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
-  activeFilter = btn.dataset.cat;
-  renderGrid();
+  const cat = btn.dataset.cat;
+  if (cat === "all") {
+    activeFilter = "all";
+    renderGrid();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else {
+    activeFilter = "all";
+    renderGrid();
+    const section = document.getElementById("section-" + cat);
+    if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 });
 
 document.getElementById("difficulty-filters").addEventListener("click", e => {
