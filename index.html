@@ -126,6 +126,22 @@
   }
   .filter-btn:hover { border-color: var(--border-hover); color: var(--text); }
   .filter-btn.active { background: var(--accent-light); color: var(--accent); border-color: transparent; font-weight: 500; }
+  .diff-btn {
+    padding: 7px 14px;
+    border-radius: 100px;
+    border: 0.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .diff-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .diff-btn.active { background: #faeeda; color: #854f0b; border-color: transparent; font-weight: 500; }
+  @media (prefers-color-scheme: dark) {
+    .diff-btn.active { background: #633806; color: #fac775; }
+  }
   .count {
     font-size: 13px;
     color: var(--faint);
@@ -289,6 +305,12 @@
     <button class="filter-btn" data-cat="shrub">Shrubs</button>
     <button class="filter-btn" data-cat="tree">Trees</button>
   </div>
+  <div class="filters" id="difficulty-filters">
+    <button class="diff-btn active" data-diff="all">Any difficulty</button>
+    <button class="diff-btn" data-diff="1">Easy</button>
+    <button class="diff-btn" data-diff="2">Moderate</button>
+    <button class="diff-btn" data-diff="3">Advanced</button>
+  </div>
   <span class="count" id="count"></span>
 </div>
 
@@ -311,6 +333,15 @@
 
 <script>
 const plants = [
+  {
+    name: "Lemon Lemonade", latin: "Citrus limon × reticulata", emoji: "🍋", cats: ["fruit","tree"],
+    sun: "Full sun", water: "Moderate", difficulty: 1,
+    season: "Harvest: winter–spring",
+    grow: "Plant in a warm, sunny spot with well-draining soil. Feed with a citrus-specific fertiliser in spring and autumn. Water deeply but allow the top few centimetres to dry between watering. Mulch around the base. Minimal pruning needed — just shape lightly after harvest. Grafted trees fruit within 1–2 years.",
+    landscape: "Compact, tidy tree to 3m — excellent for small gardens and large pots. Glossy foliage and fragrant white flowers year-round. Dwarf forms are ideal for courtyards and balconies. The pale yellow, almost white fruit is decorative and unusual.",
+    facts: ["A natural hybrid between a lemon and a mandarin — sweeter and less acidic than a standard lemon", "The fruit looks like a pale lemon but tastes closer to a sweet lemonade when eaten fresh", "One of the most productive backyard citrus trees — prolific fruiting even on young trees", "Developed in Australia and extremely popular in Sydney nurseries"],
+    sydney: "Perfectly suited to Sydney's climate. One of the best backyard citrus choices — easier than lemon, sweeter fruit, and looks beautiful year-round. Widely available at Sydney nurseries. Almost no pest pressure compared to standard lemons."
+  },
   {
     name: "Lemon", latin: "Citrus limon", emoji: "🍋", cats: ["fruit","tree"],
     sun: "Full sun", water: "Moderate", difficulty: 2,
@@ -638,6 +669,7 @@ const catLabels = {
 };
 
 let activeFilter = "all";
+let activeDiff = "all";
 let query = "";
 
 function renderGrid() {
@@ -645,9 +677,10 @@ function renderGrid() {
   const countEl = document.getElementById("count");
   const filtered = plants.filter(p => {
     const matchCat = activeFilter === "all" || p.cats.includes(activeFilter);
+    const matchDiff = activeDiff === "all" || p.difficulty === parseInt(activeDiff);
     const q = query.toLowerCase();
     const matchQ = !q || p.name.toLowerCase().includes(q) || p.latin.toLowerCase().includes(q);
-    return matchCat && matchQ;
+    return matchCat && matchDiff && matchQ;
   });
   countEl.textContent = filtered.length + " plant" + (filtered.length !== 1 ? "s" : "");
   if (!filtered.length) {
@@ -735,6 +768,15 @@ document.getElementById("filters").addEventListener("click", e => {
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   activeFilter = btn.dataset.cat;
+  renderGrid();
+});
+
+document.getElementById("difficulty-filters").addEventListener("click", e => {
+  const btn = e.target.closest(".diff-btn");
+  if (!btn) return;
+  document.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  activeDiff = btn.dataset.diff;
   renderGrid();
 });
 
