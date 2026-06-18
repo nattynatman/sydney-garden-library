@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sydney Garden Library</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #f9f8f5;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.1);
+    --border-hover: rgba(0,0,0,0.2);
+    --text: #1a1a1a;
+    --muted: #666;
+    --faint: #999;
+    --accent: #3b6d11;
+    --accent-light: #eaf3de;
+    --pill-bg: #f0efe9;
+    --pill-text: #444;
+    --tag-fruit: #faeeda; --tag-fruit-t: #854f0b;
+    --tag-veg: #eaf3de; --tag-veg-t: #3b6d11;
+    --tag-herb: #e1f5ee; --tag-herb-t: #0f6e56;
+    --tag-flower: #fbeaf0; --tag-flower-t: #993556;
+    --tag-native: #e6f1fb; --tag-native-t: #185fa5;
+    --tag-tree: #f1efe8; --tag-tree-t: #5f5e5a;
+    --tag-shrub: #eeedfe; --tag-shrub-t: #534ab7;
+    --overlay: rgba(0,0,0,0.45);
+    --radius: 12px;
+    --modal-radius: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161614;
+      --surface: #1f1f1d;
+      --border: rgba(255,255,255,0.1);
+      --border-hover: rgba(255,255,255,0.2);
+      --text: #f0efe9;
+      --muted: #aaa;
+      --faint: #666;
+      --accent: #97c459;
+      --accent-light: #27500a;
+      --pill-bg: #2a2a27;
+      --pill-text: #ccc;
+      --tag-fruit: #633806; --tag-fruit-t: #fac775;
+      --tag-veg: #27500a; --tag-veg-t: #c0dd97;
+      --tag-herb: #085041; --tag-herb-t: #9fe1cb;
+      --tag-flower: #72243e; --tag-flower-t: #f4c0d1;
+      --tag-native: #0c447c; --tag-native-t: #b5d4f4;
+      --tag-tree: #444441; --tag-tree-t: #d3d1c7;
+      --tag-shrub: #3c3489; --tag-shrub-t: #cecbf6;
+    }
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    padding: 3rem 2rem 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  header p {
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .controls {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem 1.5rem;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--faint);
+    pointer-events: none;
+  }
+  input[type=search] {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type=search]:focus { border-color: var(--border-hover); }
+  input[type=search]::placeholder { color: var(--faint); }
+  .filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 7px 14px;
+    border-radius: 100px;
+    border: 0.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .filter-btn.active { background: var(--accent-light); color: var(--accent); border-color: transparent; font-weight: 500; }
+  .count {
+    font-size: 13px;
+    color: var(--faint);
+    margin-left: auto;
+    align-self: center;
+  }
+  .grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+    overflow: hidden;
+  }
+  .card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+  .card-emoji {
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    background: var(--pill-bg);
+    user-select: none;
+  }
+  .card-body { padding: 14px; }
+  .card-name { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
+  .card-latin { font-size: 12px; color: var(--faint); font-style: italic; margin-bottom: 10px; }
+  .card-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 100px;
+    font-weight: 500;
+  }
+  .tag-fruit { background: var(--tag-fruit); color: var(--tag-fruit-t); }
+  .tag-veg { background: var(--tag-veg); color: var(--tag-veg-t); }
+  .tag-herb { background: var(--tag-herb); color: var(--tag-herb-t); }
+  .tag-flower { background: var(--tag-flower); color: var(--tag-flower-t); }
+  .tag-native { background: var(--tag-native); color: var(--tag-native-t); }
+  .tag-tree { background: var(--tag-tree); color: var(--tag-tree-t); }
+  .tag-shrub { background: var(--tag-shrub); color: var(--tag-shrub-t); }
+  .empty {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--faint);
+    font-size: 15px;
+  }
+
+  /* Modal */
+  .modal-bg {
+    display: none;
+    position: fixed; inset: 0;
+    background: var(--overlay);
+    z-index: 100;
+    padding: 2rem;
+    overflow-y: auto;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--modal-radius);
+    border: 0.5px solid var(--border);
+    width: 100%;
+    max-width: 620px;
+    margin: auto;
+  }
+  .modal-header {
+    padding: 2rem 2rem 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .modal-emoji { font-size: 56px; line-height: 1; }
+  .modal-title-wrap { flex: 1; }
+  .modal-title { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .modal-latin { font-size: 14px; color: var(--faint); font-style: italic; margin-bottom: 12px; }
+  .modal-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .modal-close {
+    background: none;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    width: 32px; height: 32px;
+    cursor: pointer;
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: var(--pill-bg); }
+  .modal-body { padding: 1.5rem 2rem 2rem; }
+  .modal-section { margin-bottom: 1.5rem; }
+  .modal-section:last-child { margin-bottom: 0; }
+  .modal-section h3 {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 8px;
+  }
+  .modal-section p, .modal-section ul {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .modal-section ul { padding-left: 1.2rem; }
+  .modal-section ul li { margin-bottom: 4px; }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .stat {
+    background: var(--pill-bg);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat-val { font-size: 13px; font-weight: 500; color: var(--text); }
+  .stat-key { font-size: 11px; color: var(--faint); margin-top: 2px; }
+  .difficulty {
+    display: flex; gap: 3px; justify-content: center; margin-bottom: 2px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .dot.on { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sydney Garden Library</h1>
+  <p>Plants suited to Sydney's climate — warm temperate, humid, frost-free coastal growing</p>
+</header>
+
+<div class="controls">
+  <div class="search-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="search" id="search" placeholder="Search plants…" autocomplete="off">
+  </div>
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-cat="all">All</button>
+    <button class="filter-btn" data-cat="fruit">Fruit trees</button>
+    <button class="filter-btn" data-cat="veg">Vegetables</button>
+    <button class="filter-btn" data-cat="herb">Herbs</button>
+    <button class="filter-btn" data-cat="flower">Flowers</button>
+    <button class="filter-btn" data-cat="native">Natives</button>
+    <button class="filter-btn" data-cat="shrub">Shrubs</button>
+    <button class="filter-btn" data-cat="tree">Trees</button>
+  </div>
+  <span class="count" id="count"></span>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-emoji" id="m-emoji"></div>
+      <div class="modal-title-wrap">
+        <div class="modal-title" id="m-name"></div>
+        <div class="modal-latin" id="m-latin"></div>
+        <div class="modal-tags" id="m-tags"></div>
+      </div>
+      <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body" id="m-body"></div>
+  </div>
+</div>
+
+<script>
+const plants = [
+  {
+    name: "Lemon", latin: "Citrus limon", emoji: "🍋", cats: ["fruit","tree"],
+    sun: "Full sun", water: "Moderate", difficulty: 2,
+    season: "Year-round",
+    grow: "Plant in a sunny, sheltered spot with well-draining slightly acidic soil. Feed with a citrus-specific fertiliser in autumn and spring. Water deeply but infrequently — let the top 5cm dry out between watering. Mulch heavily to retain moisture and suppress weeds. Prune lightly after harvest to shape.",
+    landscape: "Makes a wonderful feature tree or productive hedge. Dwarf varieties suit courtyards and large pots. Excellent espaliered against a warm north-facing fence — saves space and looks architectural.",
+    facts: ["Sydney's warm, humid climate is ideal — lemons thrive here year-round", "Eureka and Lisbon are the most reliable varieties for Sydney gardens", "Fruit can take 6–9 months to ripen from flowering", "A single mature tree can produce 100+ lemons per year"],
+    sydney: "Grows exceptionally well. Avoid frost pockets in western Sydney. Watch for citrus leafminer and bronze orange bug in warmer months."
+  },
+  {
+    name: "Avocado", latin: "Persea americana", emoji: "🥑", cats: ["fruit","tree"],
+    sun: "Full sun", water: "Low-moderate", difficulty: 3,
+    season: "Harvest: summer–autumn",
+    grow: "Needs excellent drainage — roots are highly susceptible to root rot (Phytophthora). Plant on a raised mound or slope. Hass is the top choice for Sydney. Plant two varieties for best cross-pollination and yields. Feed with a citrus/avocado fertiliser. Avoid overwatering at all costs.",
+    landscape: "Large spreading canopy — allow 6–8m width. Provides dramatic year-round shade. Unsuitable for small gardens unless grown in a pot and kept pruned. Beautiful glossy foliage.",
+    facts: ["Avocados are classified as A-type or B-type flowers — plant both for fruit set", "It takes 3–5 years for a grafted tree to bear fruit", "The skin of a Hass turns dark purple-black when ripe", "Avocado roots are shallow — mow carefully around the base"],
+    sydney: "Grows best in coastal northern Sydney and the Northern Beaches. Western Sydney can be marginal — choose a warm, north-facing slope and protect from cold snaps."
+  },
+  {
+    name: "Passionfruit", latin: "Passiflora edulis", emoji: "🟣", cats: ["fruit"],
+    sun: "Full sun", water: "Moderate", difficulty: 2,
+    season: "Harvest: autumn–winter",
+    grow: "Fast-growing vine — provide a strong trellis or fence. Plant in spring in free-draining soil enriched with compost. Feed monthly with a potassium-rich fertiliser during flowering. Vines can grow 5–6m per year. Light pruning after harvest keeps it productive. Most vines last 5–7 years.",
+    landscape: "Ideal for covering fences, pergolas, and trellises quickly. Stunning purple flowers attract bees. Combines well with timber structures. Creates privacy screens within one season.",
+    facts: ["Sydney is Australia's passionfruit heartland — ideal climate", "Flowers must be pollinated — bees or hand-pollinate in the morning", "A vine can produce 50–100 fruit in a season", "Grafted varieties are more vigorous and disease-resistant"],
+    sydney: "One of the easiest edibles to grow in Sydney. Black passionfruit (Panama Gold) thrives in coastal areas. Banana passionfruit also does well but can become invasive."
+  },
+  {
+    name: "Banana", latin: "Musa × paradisiaca", emoji: "🍌", cats: ["fruit","tree"],
+    sun: "Full sun", water: "High", difficulty: 2,
+    season: "Harvest: summer",
+    grow: "Needs a warm, sheltered, frost-free position. Plant in deep, rich, well-draining soil. Feed heavily — bananas are hungry plants. Water consistently, especially in summer. Each plant fruits once then is cut back; new suckers replace it. Dwarf Cavendish is best for home gardens.",
+    landscape: "Tropical statement plant. Creates lush, exotic atmosphere. Group several together for a dramatic screen or focal point. Excellent for sheltered courtyards.",
+    facts: ["Bananas are technically giant herbs, not trees — the trunk is made of leaf bases", "The fruit develops without pollination — they're seedless clones", "A 'hand' of bananas is a cluster; a full 'bunch' can weigh 30–50kg", "Allow 9–12 months from flowering to harvest"],
+    sydney: "Excellent in coastal Sydney and sheltered northern suburbs. Protect from strong winds — leaves shred badly. Winter cold can slow growth but rarely kills established plants."
+  },
+  {
+    name: "Feijoa", latin: "Acca sellowiana", emoji: "🍈", cats: ["fruit","shrub"],
+    sun: "Full sun – part shade", water: "Low", difficulty: 1,
+    season: "Harvest: autumn",
+    grow: "Remarkably tough and drought-tolerant once established. Plant two varieties for cross-pollination. Minimal fertilising needed — a light compost mulch annually is sufficient. Prune after harvest to shape. Very little pest or disease pressure.",
+    landscape: "Dense evergreen shrub or small tree to 3–5m. Excellent hedging plant or informal screen. Attractive red and white flowers in summer are edible. Silvery-green foliage is distinctive.",
+    facts: ["The petals of feijoa flowers are edible and sweet — great in salads", "Also known as pineapple guava — the flavour is a cross between guava, pineapple and mint", "Originally from South America; thrives in Sydney's mild winters", "Fruit falls when ripe — just collect from the ground"],
+    sydney: "Underused but brilliant for Sydney. Handles humidity, dry spells, and brief cold snaps. One of the most low-maintenance fruit-bearers in the Sydney garden."
+  },
+  {
+    name: "Fig", latin: "Ficus carica", emoji: "🫐", cats: ["fruit","tree"],
+    sun: "Full sun", water: "Low-moderate", difficulty: 1,
+    season: "Harvest: summer–autumn",
+    grow: "Thrives with minimal care. Plant in a sunny, sheltered spot — a warm north-facing wall is ideal. Tolerates poor soil but rewards rich, well-draining soil with bigger harvests. Very drought-tolerant once established. Prune in winter while dormant to maintain shape and encourage fruiting spurs.",
+    landscape: "Architecturally stunning tree — large palmate leaves and silver-grey sculptural trunk. Deciduous in winter, offering summer shade and winter light. Excellent espalier specimen.",
+    facts: ["What we eat is technically a syconium — an inside-out flower cluster", "Brown Turkey and White Adriatic are best for Sydney's climate", "Fig trees can live for over 100 years", "Fresh figs only last 2–3 days — one reason commercial growing is so challenging"],
+    sydney: "Does exceptionally well in Sydney and wider NSW coast. Autumn figs ripen just as humidity drops — perfect timing. Restrict roots with a container or pavers to encourage fruiting over leafy growth."
+  },
+  {
+    name: "Tomato", latin: "Solanum lycopersicum", emoji: "🍅", cats: ["veg"],
+    sun: "Full sun", water: "Moderate-high", difficulty: 2,
+    season: "Plant: spring–summer",
+    grow: "Start from seedlings after frost risk passes (October in Sydney). Plant deeply — bury the stem to encourage more roots. Stake early. Feed with a balanced then potassium-rich fertiliser as they fruit. Water consistently — irregular watering causes blossom end rot. Pinch off suckers on indeterminate varieties to focus energy.",
+    landscape: "Vertical interest with staking. Cherry tomato varieties make attractive container plants. Pair with basil as a companion planting classic.",
+    facts: ["Sydney's warm summers allow multiple crops — plant again in late summer for an autumn harvest", "Over 10,000 tomato varieties exist worldwide", "Tomatoes were once thought to be poisonous in Europe", "The word 'tomato' comes from the Aztec word 'tomatl'"],
+    sydney: "Sydney's hot, humid summers can promote fungal disease. Choose disease-resistant varieties (e.g. Roma, Grosse Lisse, Tigerella). Ensure good airflow. Watch for fruit fly — use exclusion bags."
+  },
+  {
+    name: "Zucchini", latin: "Cucurbita pepo", emoji: "🥒", cats: ["veg"],
+    sun: "Full sun", water: "Moderate-high", difficulty: 1,
+    season: "Plant: spring–summer",
+    grow: "Sow direct or transplant seedlings in spring. Needs space — each plant sprawls 1–1.5m. Feed generously with nitrogen then phosphorus as it flowers. Hand-pollinate if bees are scarce. Harvest frequently when 15–20cm to keep plants producing — they slow dramatically once overripe fruit forms.",
+    landscape: "Dramatic tropical-looking leaves make zucchinis ornamental as well as edible. Great for filling bare ground quickly in summer. Train up a trellis to save space.",
+    facts: ["A neglected zucchini can become a marrow overnight — it doubles in size very quickly", "The flowers are edible and delicious stuffed and fried", "One healthy plant can produce 6–10 zucchinis per week", "Related to pumpkin, cucumber, and melon"],
+    sydney: "One of the most productive summer vegetables in Sydney. Very easy — almost too productive. Powdery mildew is common in humid periods; pick leaves rather than spray."
+  },
+  {
+    name: "Chilli", latin: "Capsicum annuum", emoji: "🌶️", cats: ["veg"],
+    sun: "Full sun", water: "Moderate", difficulty: 1,
+    season: "Plant: spring–summer",
+    grow: "Start indoors in September, transplant outdoors in October–November. Needs warm soil to thrive. Light, consistent feeding. Water moderately — drought stress actually intensifies heat. Plants can be cut back in autumn and will often reshoot the following spring in Sydney's mild climate.",
+    landscape: "Ornamental as well as edible. Colourful fruit in yellow, red, purple. Makes a striking container plant on a sunny deck or balcony. Compact varieties work well in pots.",
+    facts: ["The 'heat' in chillies is capsaicin — measured in Scoville units", "Sydney's climate allows chilli plants to behave as perennials", "Birds are immune to capsaicin — they help disperse seeds in the wild", "Hungarian wax, cayenne, and bird's eye all perform well in Sydney"],
+    sydney: "Sydney's summers are ideal for chilli production. In sheltered, warm gardens, plants often survive winter and fruit for 2–3 years. Protect from cold snaps with fleece."
+  },
+  {
+    name: "Sweet Potato", latin: "Ipomoea batatas", emoji: "🍠", cats: ["veg"],
+    sun: "Full sun", water: "Low-moderate", difficulty: 1,
+    season: "Plant: spring–summer",
+    grow: "Plant slips (rooted cuttings) in spring when soil warms. Needs no fertiliser once established — too much nitrogen = all leaves, no tubers. Let it sprawl or train over a trellis. Harvest 4–5 months after planting when vines start to yellow. Leave tubers in the ground in frost-free Sydney until ready to harvest.",
+    landscape: "Spectacular sprawling ground cover. Ornamental purple-leaf varieties are stunning in garden beds. Covers bare soil rapidly, suppresses weeds, and looks lush through summer.",
+    facts: ["Sweet potato leaves are also edible and nutritious — popular in Asian cooking", "Not closely related to the common potato — it's in the morning glory family", "Needs weeks of 'curing' in a warm dry spot after harvest to develop full sweetness", "One of the most nutritious vegetables you can grow"],
+    sydney: "Thrives in Sydney's warm climate. Perfect for large, low-maintenance garden beds. Purple leaf varieties are both edible and ornamental."
+  },
+  {
+    name: "Silverbeet", latin: "Beta vulgaris subsp. cicla", emoji: "🥬", cats: ["veg"],
+    sun: "Full sun – part shade", water: "Moderate", difficulty: 1,
+    season: "Plant: autumn–spring",
+    grow: "Direct sow or transplant. Extremely easy and productive. Harvest outer leaves regularly and the plant keeps producing for 12+ months. Tolerates light frost. Feed with a nitrogen-rich fertiliser monthly. Coloured-stem Rainbow Chard varieties are especially ornamental.",
+    landscape: "Extremely structural and ornamental. Bright yellow, red, and orange stems of Rainbow Chard look stunning in garden beds. Works as an edging plant or in mixed borders.",
+    facts: ["Silverbeet and chard are the same plant — just different names used in different countries", "One of the most productive vegetables per square metre in Sydney gardens", "Packed with vitamins K, A, and C", "Can be harvested within 8–12 weeks of sowing"],
+    sydney: "One of the best year-round vegetables for Sydney. Loves the cooler months — autumn sowings produce right through winter and into spring."
+  },
+  {
+    name: "Pumpkin", latin: "Cucurbita maxima", emoji: "🎃", cats: ["veg"],
+    sun: "Full sun", water: "Moderate-high", difficulty: 1,
+    season: "Plant: spring",
+    grow: "Sow in spring in a large mound of compost-enriched soil. Needs serious space — vines run 3–6m. Feed generously. Lift developing fruit off the soil with a tile to prevent rotting. Harvest when the vine dries back and the skin resists a fingernail. Butternuts and Jarrahdales are top performers.",
+    landscape: "Train vines over a pergola or strong trellis to create a dramatic living canopy. Fruit hanging overhead is theatrical. A single plant fills enormous space quickly.",
+    facts: ["Pumpkins are 90% water but the seeds are packed with zinc and protein", "The Jarrahdale pumpkin is a native Australian variety developed in WA", "A fully cured pumpkin can be stored for 3–6 months", "The flowers are edible — pick the males (no fruit behind them)"],
+    sydney: "Very successful in Sydney's warm summers. Autumn planting possible in northern Sydney. Queensland Blue and Butternut are particularly suited to the humid east coast."
+  },
+  {
+    name: "Basil", latin: "Ocimum basilicum", emoji: "🌿", cats: ["herb"],
+    sun: "Full sun", water: "Moderate", difficulty: 1,
+    season: "Plant: spring–summer",
+    grow: "Loves heat — don't plant until after October. Pinch out flower heads constantly to keep leaves growing. Feed lightly with a nitrogen fertiliser. Plant near tomatoes as a companion — improves flavour and deters pests. Bring indoors or to a sheltered spot in autumn as it dislikes cold.",
+    landscape: "Compact and lush. Works beautifully in pots, window boxes, or woven through vegetable beds. Thai basil has attractive purple flowers that are ornamental. Sweet basil has a satisfyingly symmetrical form.",
+    facts: ["Basil is sacred in Hindu tradition and commonly planted outside temples", "There are over 60 varieties — from lettuce-leaf to cinnamon to Thai basil", "The scent intensifies in hot weather — that's the plant releasing volatile oils", "Sydney's summers are almost too good for basil — harvests can be enormous"],
+    sydney: "Thrives in Sydney summers. Grow multiple plants — they produce so much it's hard to use it all. Great on a north-facing windowsill in winter with protection from cold."
+  },
+  {
+    name: "Rosemary", latin: "Salvia rosmarinus", emoji: "🌱", cats: ["herb","shrub"],
+    sun: "Full sun", water: "Low", difficulty: 1,
+    season: "Year-round",
+    grow: "Extremely drought-tolerant once established. Requires well-draining soil — hates wet feet. Minimal feeding needed. Prune after flowering to maintain shape and prevent woodiness. Can be grown as a hedge. Virtually pest-free and maintenance-free once established.",
+    landscape: "One of the most useful landscape plants — evergreen, aromatic, structural. Prostrate varieties work as ground cover on slopes. Upright forms make excellent formal hedges and topiary. Beautiful blue flowers attract bees.",
+    facts: ["Rosemary means 'dew of the sea' — it's native to Mediterranean cliffs above the ocean", "Compounds in rosemary have been studied for improving memory and concentration", "Can live 20–30 years in the right conditions", "A favourite nesting plant for native bees in Sydney gardens"],
+    sydney: "Virtually bulletproof in Sydney. Thrives in coastal gardens and tolerates dry spells, salt air, and neglect. One of the top herbs for Sydney gardens."
+  },
+  {
+    name: "Chives", latin: "Allium schoenoprasum", emoji: "🪴", cats: ["herb"],
+    sun: "Full sun – part shade", water: "Moderate", difficulty: 1,
+    season: "Year-round",
+    grow: "Grow in clumps. Divide every 2–3 years to reinvigorate. Harvest by cutting to 3cm above soil — they regrow within weeks. Allow some flowers to develop — they're edible and beautiful. Feed with a light nitrogen fertiliser in spring. Very drought-tolerant once established.",
+    landscape: "Neat tidy clumps with beautiful purple pompom flowers. Excellent border edging plant. Grows happily between pavers. Works in containers and window boxes.",
+    facts: ["The purple flowers are edible and have a mild onion flavour", "Chives naturally deter aphids — plant near roses and fruit trees", "Part of the same family as garlic, leeks, and onions", "Can be snipped and added directly to dishes fresh — no cooking needed"],
+    sydney: "Grows year-round in Sydney with minimal care. More productive in cooler months. One of the most unfussy herbs for pot or ground growing."
+  },
+  {
+    name: "Turmeric", latin: "Curcuma longa", emoji: "🫛", cats: ["herb"],
+    sun: "Part shade – full sun", water: "Moderate-high", difficulty: 2,
+    season: "Plant: spring, harvest: autumn",
+    grow: "Plant rhizomes in spring when soil warms. Needs rich, moisture-retentive soil and regular watering. Dies back in winter — dig and store or leave in the ground in frost-free Sydney. Harvest when leaves yellow in autumn. One rhizome produces a generous clump.",
+    landscape: "Lush tropical-looking foliage. Beautiful flower spikes in summer. Excellent in a tropical or subtropical garden scheme. Works well in pots where soil can be controlled.",
+    facts: ["Turmeric gives curries their golden colour — the compound is curcumin", "Fresh turmeric root has a much brighter, more complex flavour than dried powder", "A potent anti-inflammatory used in Ayurvedic medicine for centuries", "Sydney's humid summers are nearly perfect for turmeric growth"],
+    sydney: "Excellent in Sydney's warm, humid climate. Grow in part shade to prevent leaf scorch. Harvest fresh root for cooking or slice and dry to make your own turmeric powder."
+  },
+  {
+    name: "Lemongrass", latin: "Cymbopogon citratus", emoji: "🌾", cats: ["herb"],
+    sun: "Full sun", water: "Moderate", difficulty: 1,
+    season: "Year-round",
+    grow: "Grows into a large clump — allow 1m diameter. Feed with nitrogen fertiliser in spring. Divide clumps every 3–4 years. Harvest outer stalks at the base. Frost-sensitive — protect in cooler inland areas of Sydney. Almost maintenance-free in coastal Sydney.",
+    landscape: "Dramatic 1–1.5m tall grassy clumps. Excellent for screening and tropical effects. Beautiful moving in the breeze. Combines well with ginger, banana, and other tropical plants.",
+    facts: ["Used extensively in Southeast Asian cooking — Thai, Vietnamese, Indonesian cuisine", "The same plant provides the essential oil used in mosquito repellents", "Can be grown from stalks bought from the supermarket — root them in water first", "A natural insect repellent — plant near outdoor seating areas"],
+    sydney: "Thrives in Sydney's warm, humid climate. One of the most productive herbs in Sydney — often grows too large for small gardens. Divide regularly and share with neighbours."
+  },
+  {
+    name: "Mint", latin: "Mentha spp.", emoji: "🍃", cats: ["herb"],
+    sun: "Full sun – part shade", water: "High", difficulty: 1,
+    season: "Spring–autumn",
+    grow: "Grow in containers to prevent spreading — mint is highly invasive in garden beds. Keep moist. Cut back hard every few months to prevent woodiness and encourage fresh growth. Spearmint and peppermint are most useful; Vietnamese mint and chocolate mint are interesting alternatives.",
+    landscape: "Low spreading ground cover. Good for filling gaps in a contained bed or between pavers (carefully). Attractive as a trailing container plant. The purple-blue flower spikes attract bees and butterflies.",
+    facts: ["Mint can spread 1m per year underground via runners — container growing is strongly recommended", "There are over 30 natural species and hundreds of hybrids", "Mice and rats strongly dislike the smell of mint", "One of the oldest known herbs — used medicinally for at least 2,000 years"],
+    sydney: "Grows vigorously in Sydney year-round. Use containers religiously — mint planted in the ground becomes a garden pest very quickly in Sydney's fertile soil."
+  },
+  {
+    name: "Ginger", latin: "Zingiber officinale", emoji: "🫚", cats: ["herb"],
+    sun: "Part shade", water: "Moderate-high", difficulty: 2,
+    season: "Plant: spring, harvest: autumn",
+    grow: "Plant a piece of fresh ginger rhizome with 'eyes' (growth buds) in spring. Needs rich, moist, well-draining soil with lots of organic matter. Prefers filtered light — direct afternoon sun scorches leaves. Dies back in winter. Harvest 8–10 months after planting. Leave some rhizome in the ground to reshoot next spring.",
+    landscape: "Beautiful clump-forming tropical foliage to 1m. Ornamental gingers (Hedychium spp.) produce stunning flower spikes — stunning as a garden foliage plant. Good in sheltered courtyards.",
+    facts: ["Fresh ginger has significantly more phytonutrients than dried ginger powder", "Gingerol — the compound in fresh ginger — becomes shogoal when dried, with different properties", "Sydney's subtropical climate is almost identical to ginger's native range in SE Asia", "Growing your own ginger is far cheaper than buying it — one piece becomes a large clump"],
+    sydney: "Thrives in Sydney's warm, humid summers. The Sutherland Shire and northern coastal suburbs are especially good. Don't expose to heavy frost — grow in pots and bring under cover if needed."
+  },
+  {
+    name: "Warrigal Greens", latin: "Tetragonia tetragonioides", emoji: "🌿", cats: ["veg","native"],
+    sun: "Full sun – part shade", water: "Low", difficulty: 1,
+    season: "Year-round",
+    grow: "Broadcast sow seeds or plant seedlings. Becomes a spreading ground cover. Harvest regularly to keep it compact. Blanch briefly before eating to reduce oxalic acid. Almost zero maintenance — drought-tolerant, self-seeds, and spreads happily.",
+    landscape: "Dense, lush ground cover. Excellent for covering bare ground or sloping areas. Works as living mulch under taller plants. The fleshy, shiny leaves look beautiful en masse.",
+    facts: ["Also known as New Zealand spinach — used by Captain Cook to prevent scurvy on his voyages", "It's one of very few vegetables indigenous to Australia widely eaten worldwide", "Naturally found on Sydney's coastal cliff tops and dunes", "Can be used exactly like spinach in cooking once briefly blanched"],
+    sydney: "Native to the Sydney coast — completely at home here. Self-seeding and near-indestructible. One of the most sustainable, low-input food plants for Sydney gardens."
+  },
+  {
+    name: "Grevillea", latin: "Grevillea spp.", emoji: "🌺", cats: ["native","shrub"],
+    sun: "Full sun", water: "Low", difficulty: 1,
+    season: "Varies by variety",
+    grow: "Plant in well-draining soil — phosphorus-sensitive, so avoid high-phosphorus fertilisers. Do not mulch the crown. Prune after flowering to maintain shape and encourage new growth. Extremely drought-tolerant once established. Attracts honeyeaters and lorikeets constantly.",
+    landscape: "One of the most useful plants in the Sydney landscape palette. Available from prostrate ground covers to large screening trees. Spider-flower blooms are exotic-looking and come in reds, oranges, pinks, and whites. Use as hedging, screening, or feature specimens.",
+    facts: ["Over 360 species of Grevillea exist, almost all native to Australia", "The nectar-rich flowers are a key food source for eastern spinebill and lorikeets", "Aboriginal people used to suck nectar from the flowers as a sweet treat", "Some Grevillea species have been found to have antimicrobial properties"],
+    sydney: "Absolutely at home in Sydney. Among the most reliable, water-wise plants available. Essential for wildlife-friendly gardens — few plants attract as much birdlife."
+  },
+  {
+    name: "Banksia", latin: "Banksia spp.", emoji: "🌻", cats: ["native","tree","shrub"],
+    sun: "Full sun", water: "Low", difficulty: 1,
+    season: "Varies by species",
+    grow: "Plant in sandy, well-draining soil. Highly phosphorus-sensitive — use only native plant fertilisers. Minimal pruning needed. Extremely drought and heat tolerant once established. Some species tolerate brief flooding. Coastal banksias are most suited to Sydney gardens.",
+    landscape: "Architectural and structural. From ground-hugging shrubs to 15m trees. Dramatic cone-shaped flower spikes in golden, orange, and red. The dried 'banksia men' (old cones) are sculptural year-round.",
+    facts: ["Named after Sir Joseph Banks, the botanist on Cook's first voyage — first collected at Botany Bay, Sydney", "The seed pods only open after fire — a fire-adaptation strategy", "Hundreds of wildlife species depend on banksias for food and shelter", "Banksia integrifolia (coastal banksia) is one of Sydney's most recognizable native trees"],
+    sydney: "Native to Sydney's sandstone heathlands. Thrives in the sandy soils of the Northern Beaches and South Head. Coastal banksia (B. integrifolia) is tough and fast-growing even in heavy soils."
+  },
+  {
+    name: "Waratah", latin: "Telopea speciosissima", emoji: "🌹", cats: ["native","shrub"],
+    sun: "Full sun – part shade", water: "Low-moderate", difficulty: 3,
+    season: "Flowers: spring",
+    grow: "Needs excellent drainage and acidic, low-phosphorus soil. Plant in a sheltered spot with morning sun. Water during dry spells in the first two years. After that, minimal intervention needed. Prune after flowering to maintain a compact shape. Responds poorly to standard fertilisers — use native-specific or nothing.",
+    landscape: "One of Australia's most spectacular flowering plants. The deep crimson flower heads (up to 15cm across) are extraordinary in spring. Makes a striking specimen plant. Works well in native garden schemes.",
+    facts: ["Telopea speciosissima is the floral emblem of New South Wales", "Telopea means 'seen from afar' — a reference to the flaming red flowers visible from a distance", "Aboriginal people would squeeze the flowers into water to create a sweet drink", "Individual plants can live for 30+ years, flowering more prolifically with age"],
+    sydney: "Sydney's Blue Mountains and northern sandstone areas are the waratah's natural home. Surprisingly growable in coastal Sydney in the right soil — sandy, acidic, well-drained."
+  },
+  {
+    name: "Lilly Pilly", latin: "Syzygium luehmannii", emoji: "🫐", cats: ["native","tree","shrub"],
+    sun: "Full sun – part shade", water: "Low-moderate", difficulty: 1,
+    season: "Berries: summer–autumn",
+    grow: "Very adaptable — tolerates most soils including clay. Feed with native fertiliser twice yearly. Responds well to hedging and topiary. Produces edible pink/red berries that make excellent jam. One of the best native hedging plants available.",
+    landscape: "The premier native hedge plant for Sydney. Dense, fine-leafed foliage clips to a beautiful formal shape. New growth flushes are striking — bronze, copper, and red. Colourful berries add seasonal interest. Available in sizes from 1m to 6m+.",
+    facts: ["Lilly pilly berries are high in vitamin C and antioxidants", "Used by Aboriginal people as a food source for thousands of years", "The genus Syzygium is one of the world's largest, with 1,200+ species", "Psyllid insects can cause 'pimply' leaves — choose resistant varieties like 'Resilience'"],
+    sydney: "One of the most versatile and recommended plants for Sydney gardens. Thrives in virtually any location, tolerates heat, drought, and poor drainage once established. Essential for native gardens."
+  },
+  {
+    name: "Frangiapani", latin: "Plumeria rubra", emoji: "🌸", cats: ["tree","flower"],
+    sun: "Full sun", water: "Low", difficulty: 1,
+    season: "Flowers: summer–autumn",
+    grow: "Plant in a warm, sheltered, sunny spot. Well-draining soil — very drought-tolerant. Virtually no maintenance once established. Deciduous in winter — loses leaves and looks bare, which concerns many gardeners, but this is normal. Feed lightly with a low-nitrogen fertiliser in spring.",
+    landscape: "The quintessential Sydney garden tree. Iconic spreading canopy to 5–6m. Intoxicatingly fragrant white, pink, red, or yellow flowers. Perfect by a pool, on a terrace, or as a suburban street tree. Excellent in courtyard containers.",
+    facts: ["Frangipani flowers have no nectar — they deceive moths into pollinating them", "The sap is toxic and a skin irritant — handle with gloves", "Cuttings are incredibly easy — leave them dry for a week before planting", "One of the best performers in Sydney's beachside gardens — highly salt-tolerant"],
+    sydney: "Thrives in Sydney's warm, coastal climate. One of the most beloved backyard trees in the city. Extremely easy — essentially plant-and-forget. The smell of frangipani on a warm Sydney evening is iconic."
+  },
+  {
+    name: "Bird of Paradise", latin: "Strelitzia reginae", emoji: "🦜", cats: ["flower","shrub"],
+    sun: "Full sun – part shade", water: "Low", difficulty: 1,
+    season: "Flowers: winter–spring",
+    grow: "Plant in well-draining soil enriched with compost. Very drought-tolerant once established. Feed in spring with a balanced fertiliser. Remove spent flower stems at the base. Divide clumps every 4–5 years. They sulk slightly when divided but recover quickly.",
+    landscape: "The ultimate bold, architectural statement. Paddle-shaped grey-green leaves and extraordinary orange and blue flowers create a tropical feel. Excellent in formal gardens, pots, and commercial landscaping.",
+    facts: ["The orange and blue flower resembles a tropical bird in flight — hence the name", "Native to South Africa — thrives in conditions similar to Sydney's climate", "Flowers last for weeks — one of the best cut flowers available", "The plant can live 20+ years, clumping progressively larger"],
+    sydney: "Virtually indestructible in Sydney. Tolerates coastal salt, drought, and neglect. One of the most reliable ornamentals in the Sydney landscape designer's toolkit."
+  },
+  {
+    name: "Agapanthus", latin: "Agapanthus africanus", emoji: "💜", cats: ["flower"],
+    sun: "Full sun – part shade", water: "Low", difficulty: 1,
+    season: "Flowers: summer",
+    grow: "Extremely tough and adaptable. Tolerates most soils. Plant in clumps for best effect. Feed in spring with a general fertiliser. Divide clumps every 4–5 years when flowering declines. Blue and white forms available. Check local regulations — declared weed in some states, but manageable in Sydney.",
+    landscape: "Classic mass-planting plant for Australian gardens. Excellent on slopes, in coastal gardens, and as informal borders. The strappy leaves provide year-round structure and the summer flower display is spectacular.",
+    facts: ["One of the most commonly planted ornamentals in Australia", "The name comes from Greek: 'agape' (love) + 'anthos' (flower)", "Individual plants can live 30+ years with virtually no care", "Resistant to most pests and diseases"],
+    sydney: "Incredibly common and reliable in Sydney. Remove spent seed heads to prevent self-seeding (though the plant is not invasive in Sydney's conditions). The blue form is more vigorous than white."
+  },
+  {
+    name: "Kangaroo Paw", latin: "Anigozanthos manglesii", emoji: "🌾", cats: ["native","flower"],
+    sun: "Full sun", water: "Low", difficulty: 2,
+    season: "Flowers: spring–summer",
+    grow: "Well-draining, sandy or gravelly soil is essential. Avoid over-watering and over-fertilising. Cut flower stems down after blooming. Divide clumps every 2–3 years — old clumps flower poorly. Watch for 'ink disease' (black streaks on leaves) — remove affected leaves and improve airflow.",
+    landscape: "Striking architectural plant with velvety tubular flowers in reds, yellows, oranges, and pinks. Excellent as a cut flower. Works well in native gardens, pots, and coastal landscapes.",
+    facts: ["The state flower of Western Australia", "The flowers are adapted for pollination by honeyeaters — pollen sticks to birds' heads as they feed", "The velvet texture of the flowers is caused by tiny hair-like cells", "Over 50 hybrid varieties exist — many bred specifically for east coast conditions"],
+    sydney: "Does well in sandy coastal soils. Can struggle in Sydney's heavier clay soils without amendment. Grow in raised beds or pots with gritty mix. 'Bush Pearl' and 'Big Red' are reliable Sydney varieties."
+  },
+  {
+    name: "Camellia", latin: "Camellia japonica", emoji: "🌺", cats: ["shrub","flower"],
+    sun: "Part shade – full sun", water: "Moderate", difficulty: 2,
+    season: "Flowers: winter–spring",
+    grow: "Plant in slightly acidic, well-draining soil enriched with compost. Mulch deeply but keep mulch away from the trunk. Feed with a camellia-specific acidic fertiliser in autumn and spring. Avoid disturbing roots. Prune lightly after flowering. Scale insects and sooty mould can be issues.",
+    landscape: "Elegant, formal evergreen shrubs. Winter and spring flowers in white, pink, red, and variegated forms are stunning. Excellent for shaded borders, Japanese garden styles, and formal hedging.",
+    facts: ["Camellia sinensis is the species that gives us tea — a close relative of ornamental camellias", "Over 3,000 recorded camellia varieties exist", "In Japan, camellias symbolize longevity and fidelity", "The first camellia was brought to Britain in 1742 — it caused a sensation"],
+    sydney: "Sydney's mild winters are ideal for camellias — they dislike hard frost. The damp, humid winters trigger prolific flowering. Coastal Sydney is particularly good. Protect from hot afternoon sun in summer."
+  },
+  {
+    name: "Garlic", latin: "Allium sativum", emoji: "🧄", cats: ["veg","herb"],
+    sun: "Full sun", water: "Moderate", difficulty: 1,
+    season: "Plant: April–June",
+    grow: "Plant individual cloves in autumn, pointed end up, 3–4cm deep, 15cm apart. Feed with a balanced fertiliser monthly. Water regularly but don't overwater. Stop watering when the leaves begin to yellow and die back. Harvest when 2/3 of the leaves have yellowed — usually November. Cure in a dry, airy spot for 3–4 weeks.",
+    landscape: "Upright strappy leaves with attractive flower scapes (remove these to direct energy into bulbs). The flower heads (scapes) can be left on a few plants as an ornamental feature.",
+    facts: ["Garlic has been cultivated for over 5,000 years — one of humanity's oldest crops", "The Rocambole varieties have the best flavour; hardneck types do best in cooler Sydney winters", "Growing your own garlic produces bulbs 2–3x the size of supermarket garlic", "One kilogram of seed garlic planted in autumn produces 8–10kg at harvest"],
+    sydney: "Plant in Sydney's cooler months (April–June) for best bulb development. The cooler Western Sydney winters produce better bulbs than the coast. Choose a softneck variety for Sydney's relatively mild winters."
+  },
+  {
+    name: "Strawberry", latin: "Fragaria × ananassa", emoji: "🍓", cats: ["fruit"],
+    sun: "Full sun", water: "Moderate", difficulty: 1,
+    season: "Plant: autumn, harvest: spring",
+    grow: "Plant runners in autumn for a spring crop. Raised beds or tiered planters work beautifully. Mulch heavily to keep fruit clean and retain moisture. Feed with potassium-rich fertiliser as fruit develops. Remove runners during fruiting to focus energy on berries. Replace plants every 3 years.",
+    landscape: "Perfect for raised beds, hanging baskets, and tiered planters. Trails attractively over container edges. The white flowers and red fruit are charming. An ideal first plant for children.",
+    facts: ["Strawberries are not technically berries — they're accessory fruits", "The 'seeds' on the outside are the actual fruits (achenes)", "Each strawberry plant produces about 1 quart of fruit per season", "Strawberries contain more vitamin C per serving than oranges"],
+    sydney: "Sydney's mild winters and spring sunshine produce excellent strawberries. The Tioga and Torrey varieties are particularly suited to Sydney. Net against birds — competition is fierce at harvest time."
+  },
+  {
+    name: "Cumquat", latin: "Fortunella japonica", emoji: "🍊", cats: ["fruit","tree"],
+    sun: "Full sun", water: "Moderate", difficulty: 1,
+    season: "Harvest: winter–spring",
+    grow: "The easiest citrus to grow — more tolerant than most. Needs full sun and good drainage. Feed with citrus fertiliser in spring and autumn. Drought-tolerant once established. Clip to shape. Produces prolifically with minimal intervention.",
+    landscape: "Small, elegant tree or shrub to 2–3m. Dense, dark green glossy foliage. Masses of golden-orange fruit through winter. Excellent specimen in a pot, as a hedge, or in a small courtyard. The entire fruit is edible — skin and all.",
+    facts: ["Unlike other citrus, you eat the whole cumquat — the skin is sweet, the flesh is tart", "Among the most cold-tolerant citrus species", "In Chinese tradition, cumquat plants are given as gifts for good luck and prosperity at New Year", "Makes exceptional marmalade and candied fruit"],
+    sydney: "One of the most rewarding plants for Sydney courtyard gardens. Heavy fruiting, minimal care, and decorative all year. Excellent in large pots for balconies and terraces."
+  },
+  {
+    name: "Lavender", latin: "Lavandula angustifolia", emoji: "💜", cats: ["herb","shrub","flower"],
+    sun: "Full sun", water: "Low", difficulty: 1,
+    season: "Flowers: spring–summer",
+    grow: "Plant in well-draining, slightly alkaline soil. Prune hard after flowering — cut back by one-third to prevent woodiness. Avoid wet winters. Excellent for slopes, raised beds, and coastal gardens. English and French lavender are best for Sydney.",
+    landscape: "Classic informal hedging and border plant. Aromatic, silver-grey foliage. Mass plantings create spectacular purple drifts. Wonderful planted along pathways and between pavers.",
+    facts: ["Lavender has been used in perfumery and medicine for over 2,500 years", "The word 'lavender' comes from the Latin 'lavare' — to wash", "An excellent companion plant — repels aphids, whitefly, and moths", "Dried lavender sachets repel moths from linen cupboards"],
+    sydney: "Performs best in Sydney's drier, well-draining areas. Can struggle in humid coastal gardens — French lavender (L. dentata) handles humidity better than English lavender. Excellent in western Sydney's drier climate."
+  },
+  {
+    name: "Blueberry", latin: "Vaccinium corymbosum", emoji: "🫐", cats: ["fruit","shrub"],
+    sun: "Full sun", water: "Moderate", difficulty: 2,
+    season: "Harvest: summer",
+    grow: "Requires highly acidic soil (pH 4.5–5.5) — this is the most critical factor. Amend with sulphur before planting or grow in pots with an ericaceous (acidic) mix. Plant at least two different varieties for cross-pollination. Mulch with pine bark. Water consistently. Feed with an acid-specific fertiliser.",
+    landscape: "Deciduous shrubs with beautiful autumn colour — fiery reds and oranges. Attractive in all seasons: spring flowers, summer fruit, autumn colour, winter structure.",
+    facts: ["Blueberries were not commercially cultivated until 1916", "One of the highest antioxidant-rich fruits available", "Plants can live for 50+ years and become increasingly productive", "Rabbiteye varieties are best suited to Sydney's warmer climate"],
+    sydney: "Sydney's neutral-to-alkaline coastal soils are the main challenge — soil acidification is essential. Grow in containers with acidic potting mix for best results. Northern Sydney highlands and Blue Mountains foothills are most suitable."
+  },
+  {
+    name: "Curry Leaf", latin: "Murraya koenigii", emoji: "🌿", cats: ["herb","tree"],
+    sun: "Full sun", water: "Moderate", difficulty: 2,
+    season: "Year-round (frost-free)",
+    grow: "Loves heat — plant in a warm, sheltered, sunny spot. Well-draining soil with compost. Water regularly in summer, reduce in winter. Feed with a balanced fertiliser in spring and summer. Protect from frost. Prune lightly to encourage bushy growth and more harvestable leaves.",
+    landscape: "Small tree or shrub to 3–4m. Beautiful glossy, pinnate leaves. White fragrant flowers followed by dark berries (toxic). Elegant form — works as a specimen, in a mixed border, or in a large container.",
+    facts: ["Used in South Indian, Sri Lankan, and Southeast Asian cooking", "Curry leaves are not the same as curry powder — they're a fresh herb with a distinct flavour", "The plant is in the same family as citrus — you can graft it onto citrus rootstock", "Rich in vitamins A, B, C, and E, plus iron and calcium"],
+    sydney: "Thrives in Sydney's warm, humid climate. Perfect for northern Sydney, the Inner West, and coastal suburbs. Move to a sheltered spot or indoors in unusually cold western Sydney winters."
+  }
+];
+
+const catColors = {
+  fruit: "tag-fruit", veg: "tag-veg", herb: "tag-herb",
+  flower: "tag-flower", native: "tag-native", tree: "tag-tree", shrub: "tag-shrub"
+};
+const catLabels = {
+  fruit: "Fruit", veg: "Vegetable", herb: "Herb", flower: "Flower",
+  native: "Native", tree: "Tree", shrub: "Shrub"
+};
+
+let activeFilter = "all";
+let query = "";
+
+function renderGrid() {
+  const grid = document.getElementById("grid");
+  const countEl = document.getElementById("count");
+  const filtered = plants.filter(p => {
+    const matchCat = activeFilter === "all" || p.cats.includes(activeFilter);
+    const q = query.toLowerCase();
+    const matchQ = !q || p.name.toLowerCase().includes(q) || p.latin.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+  countEl.textContent = filtered.length + " plant" + (filtered.length !== 1 ? "s" : "");
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty">No plants found — try a different search or filter.</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map((p, i) => `
+    <div class="card" data-idx="${plants.indexOf(p)}" tabindex="0" role="button" aria-label="View ${p.name} details">
+      <div class="card-emoji">${p.emoji}</div>
+      <div class="card-body">
+        <div class="card-name">${p.name}</div>
+        <div class="card-latin">${p.latin}</div>
+        <div class="card-tags">${p.cats.map(c => `<span class="tag ${catColors[c]}">${catLabels[c]}</span>`).join("")}</div>
+      </div>
+    </div>
+  `).join("");
+  grid.querySelectorAll(".card").forEach(card => {
+    card.addEventListener("click", () => openModal(parseInt(card.dataset.idx)));
+    card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") openModal(parseInt(card.dataset.idx)); });
+  });
+}
+
+function openModal(idx) {
+  const p = plants[idx];
+  document.getElementById("m-emoji").textContent = p.emoji;
+  document.getElementById("m-name").textContent = p.name;
+  document.getElementById("m-latin").textContent = p.latin;
+  document.getElementById("m-tags").innerHTML = p.cats.map(c => `<span class="tag ${catColors[c]}">${catLabels[c]}</span>`).join("");
+
+  const dots = d => Array.from({length: 3}, (_,i) => `<div class="dot ${i < d ? 'on' : ''}"></div>`).join("");
+  document.getElementById("m-body").innerHTML = `
+    <div class="stats-row">
+      <div class="stat">
+        <div class="difficulty">${dots(p.difficulty)}</div>
+        <div class="stat-key">Difficulty</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">${p.sun}</div>
+        <div class="stat-key">Sunlight</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">${p.water}</div>
+        <div class="stat-key">Water</div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h3>Season</h3>
+      <p>${p.season}</p>
+    </div>
+    <div class="modal-section">
+      <h3>How to grow</h3>
+      <p>${p.grow}</p>
+    </div>
+    <div class="modal-section">
+      <h3>Landscape use</h3>
+      <p>${p.landscape}</p>
+    </div>
+    <div class="modal-section">
+      <h3>In Sydney</h3>
+      <p>${p.sydney}</p>
+    </div>
+    <div class="modal-section">
+      <h3>Interesting facts</h3>
+      <ul>${p.facts.map(f => `<li>${f}</li>`).join("")}</ul>
+    </div>
+  `;
+  document.getElementById("modal-bg").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeModal() {
+  document.getElementById("modal-bg").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+document.getElementById("modal-close").addEventListener("click", closeModal);
+document.getElementById("modal-bg").addEventListener("click", e => {
+  if (e.target === document.getElementById("modal-bg")) closeModal();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+document.getElementById("filters").addEventListener("click", e => {
+  const btn = e.target.closest(".filter-btn");
+  if (!btn) return;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  activeFilter = btn.dataset.cat;
+  renderGrid();
+});
+
+document.getElementById("search").addEventListener("input", e => {
+  query = e.target.value;
+  renderGrid();
+});
+
+renderGrid();
+</script>
+</body>
+</html>
